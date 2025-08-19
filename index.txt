@@ -413,7 +413,6 @@ wVal.textContent=widthRange.value;
 fsVal.textContent=fontsizeRange.value;
 fontColorInp.disabled = (modeSel.value==='color');
 </script>
-</body>
 <footer>
   <p style="text-align:center; color:#666; font-size:14px;">© 2025 textartkorea.com</p>
   <div style="max-width:100%; text-align:center; margin:20px 0;">
@@ -424,4 +423,5 @@ fontColorInp.disabled = (modeSel.value==='color');
     </a>
   </div>
 </footer>
+</body>
 </html>
