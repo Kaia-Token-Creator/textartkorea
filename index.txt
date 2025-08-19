@@ -414,4 +414,14 @@ fsVal.textContent=fontsizeRange.value;
 fontColorInp.disabled = (modeSel.value==='color');
 </script>
 </body>
+<footer>
+  <p style="text-align:center; color:#666; font-size:14px;">© 2025 textartkorea.com</p>
+  <div style="max-width:100%; text-align:center; margin:20px 0;">
+    <a href="https://iryan.kr/t7372qyi9v" target="_blank" rel="noopener">
+      <img src="https://img.tenping.kr/Content/Upload/Content/2025080810130001_Con_20250811102256_5.jpg?RS=1200x1200" 
+           alt="광고 배너" 
+           style="max-width:100%; height:auto;">
+    </a>
+  </div>
+</footer>
 </html>
