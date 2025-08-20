@@ -77,6 +77,15 @@
     padding:12px; border-radius:12px; line-height:1em; min-height:200px
   }
 
+  /* ✅ 메시지를 마지막 줄 '아래' 우측 정렬로 표시 */
+  .msg-below{
+    margin-top:6px;
+    text-align:right;
+    font-weight:700;
+    color:#fff;
+    white-space:pre;
+  }
+
   /* 모바일 여백 조금 더 */
   @media(max-width:480px){
     .control{margin:10px 0; padding:10px}
@@ -155,6 +164,8 @@
     <div class="panel">
       <div id="preview" style="margin-bottom:8px"></div>
       <pre id="ascii"></pre>
+      <!-- ✅ 메시지를 ASCII 아래, 우측 정렬로 별도 표시 -->
+      <div id="msgBelow" class="msg-below"></div>
     </div>
   </div>
 </div>
@@ -189,6 +200,7 @@ const fileInput=document.getElementById('file');
 const drop=document.getElementById('drop');
 const preview=document.getElementById('preview');
 const asciiPre=document.getElementById('ascii');
+const msgBelowEl=document.getElementById('msgBelow');
 const canvas=document.getElementById('canvas');
 const ctx=canvas.getContext('2d',{willReadFrequently:true});
 
@@ -224,6 +236,7 @@ function readFile(file){
     preview.innerHTML=`<img src="${url}" style="max-width:100%;border-radius:8px;border:1px solid #1e293b">`;
     btnRender.disabled=false;
     asciiPre.innerHTML='';
+    msgBelowEl.textContent='';
     latestAsciiText=''; latestColorGrid=null;
   };
   image.onerror=()=>alert('이미지를 불러오지 못했습니다.');
@@ -243,7 +256,7 @@ window.addEventListener('paste',e=>{
 widthRange.addEventListener('input',()=> wVal.textContent = widthRange.value);
 fontsizeRange.addEventListener('input',()=>{ fsVal.textContent = fontsizeRange.value; asciiPre.style.fontSize = fontsizeRange.value+'px'; });
 modeSel.addEventListener('change',()=>{ fontColorInp.disabled = (modeSel.value==='color'); if(img) renderASCII(); });
-fontColorInp.addEventListener('input',()=>{ if(modeSel.value==='mono' && latestAsciiText) asciiPre.style.color = fontColorInp.value; });
+fontColorInp.addEventListener('input',()=>{ if(latestAsciiText) { asciiPre.style.color = fontColorInp.value; msgBelowEl.style.color = fontColorInp.value; } });
 bgColorInp.addEventListener('input',()=>{ if(latestAsciiText) asciiPre.style.background = bgColorInp.value; });
 
 // ===== 핵심 렌더링 (미리보기) =====
@@ -288,10 +301,8 @@ function renderASCII(){
   if(lines.length){
     const last=lines[lines.length-1];
     const cols=last.length;
-    // 왼쪽으로 고정
     const replaced = domain + last.slice(domain.length);
     lines[lines.length-1] = replaced;
-
     if(mode==='color'){
       const rowIdx=lines.length-1;
       for(let c=0;c<Math.min(domain.length, cols); c++){
@@ -303,22 +314,8 @@ function renderASCII(){
     if(mode==='color') colorGrid.push(domain.split('').map(()=> '#ffffff'));
   }
 
-  // === 사용자 메시지: 마지막 줄 맨오른쪽 ===
+  // ✅ 사용자 메시지는 더 이상 마지막 줄에 끼우지 않음 — 아래 박스에 별도 표시
   const userMsg = (customMsgInp.value || '').slice(0,10);
-  if(userMsg){
-    const rowIdx = lines.length-1;
-    const baseLine = lines[rowIdx];
-    const cols = baseLine.length;
-    const start = Math.max(0, cols - userMsg.length);
-    const newLine = baseLine.slice(0, start) + userMsg;
-    lines[rowIdx] = newLine;
-
-    if(mode==='color'){
-      for(let i=0;i<userMsg.length;i++){
-        colorGrid[rowIdx][start+i] = '#ffffff'; // 메시지는 가독성 위해 흰색
-      }
-    }
-  }
 
   latestAsciiText=lines.join('\n');
   latestColorGrid=(mode==='color') ? colorGrid : null;
@@ -330,6 +327,7 @@ function renderASCII(){
   if(mode==='mono'){
     asciiPre.style.color=fontColorInp.value;
     asciiPre.textContent=latestAsciiText;
+    msgBelowEl.style.color = fontColorInp.value;
   }else{
     const rowsHtml=[];
     for(let y=0;y<lines.length;y++){
@@ -342,14 +340,18 @@ function renderASCII(){
       rowsHtml.push(html);
     }
     asciiPre.innerHTML=rowsHtml.join('<br>');
+    msgBelowEl.style.color = '#ffffff';
   }
+
+  // ✅ 메시지를 아래 박스에 우측 정렬로 표시
+  msgBelowEl.textContent = userMsg || '';
 
   btnCopy.disabled=false;
   btnSavePng.disabled=false;
   btnShareImage.disabled=false;
 }
 
-// ===== PNG 빌드(저장/공유 공용) — 더 밝게 + 두껍게 =====
+// ===== PNG 빌드(저장/공유 공용) — 더 밝게 + 두껍게 + 메시지 아래 우측 정렬 =====
 async function buildImageBlob(){
   if(!latestAsciiText) return null;
 
@@ -357,6 +359,7 @@ async function buildImageBlob(){
   const baseFont    = parseInt(fontsizeRange.value, 10);
   const fontColor   = fontColorInp.value;
   const bgColor     = bgColorInp.value;
+  const userMsg     = (customMsgInp.value || '').slice(0,10);
 
   // 저장/공유 전용 고해상도 배율
   const SCALE_FACTOR = 2;
@@ -375,8 +378,11 @@ async function buildImageBlob(){
   const rows  = lines.length;
   const pad   = Math.round(fontSize * 0.7);
 
+  // ✅ 메시지 영역 높이 추가(있을 때만)
+  const msgHeight = userMsg ? Math.ceil(fontSize * 1.3) : 0;
+
   tmp.width  = Math.ceil(pad + cols * charWidth + pad);
-  tmp.height = Math.ceil(pad + rows * fontSize + pad);
+  tmp.height = Math.ceil(pad + rows * fontSize + pad + msgHeight);
 
   // 배경
   tctx.fillStyle = bgColor;
@@ -407,6 +413,16 @@ async function buildImageBlob(){
         x += charWidth;
       }
     }
+  }
+
+  // ✅ 메시지를 마지막 줄 '아래' 우측 정렬로 그리기 (있을 때만)
+  if (userMsg) {
+    tctx.fillStyle = (mode === 'mono') ? fontColor : '#ffffff';
+    const msgWidth = tctx.measureText(userMsg).width;
+    const x = Math.max(pad, tmp.width - pad - msgWidth); // 오른쪽 정렬
+    const y = pad + rows * fontSize + Math.round(fontSize * 0.2); // 본문 아래 약간 여백
+    tctx.fillText(userMsg, x, y);
+    tctx.fillText(userMsg, x, y); // 두께감
   }
 
   return await new Promise(res => tmp.toBlob(res, 'image/png'));
@@ -459,7 +475,7 @@ btnShareSite.addEventListener('click',async()=>{
 // 초기화
 btnClear.addEventListener('click',()=>{
   img=null; latestAsciiText=''; latestColorGrid=null;
-  fileInput.value=''; preview.innerHTML=''; asciiPre.innerHTML='';
+  fileInput.value=''; preview.innerHTML=''; asciiPre.innerHTML=''; msgBelowEl.textContent='';
   btnRender.disabled=true; btnCopy.disabled=true; btnSavePng.disabled=true; btnShareImage.disabled=true;
 });
 
