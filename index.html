@@ -7,11 +7,10 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-93TFLCBY3F');
 </script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9891583086388017"
-     crossorigin="anonymous"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9891583086388017" crossorigin="anonymous"></script>
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>텍스트 아트 생성기 - textartkorea.com</title>
@@ -62,7 +61,7 @@
     margin:12px 0; padding:10px; border:1px solid var(--border); border-radius:10px; background:#0f172a66
   }
   .control label{font-size:12px;color:var(--muted)}
-  .control input[type="range"], .control select, .control input[type="color"]{width:100%}
+  .control input[type="range"], .control select, .control input[type="color"], .control input[type="text"]{width:100%}
 
   .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
   button{
@@ -137,6 +136,12 @@
         <input id="bgColor" type="color" value="#000000">
       </div>
 
+      <!-- 🔹 사용자 메시지: 최대 10글자, 우측 하단 출력 -->
+      <div class="control">
+        <label for="customMsg">메시지 (최대 10글자까지 입력 가능. 우측 하단 출력)</label>
+        <input id="customMsg" type="text" maxlength="10" placeholder="메시지 입력">
+      </div>
+
       <div class="btns">
         <button id="render" class="primary" disabled>만들기</button>
         <button id="copyBtn" class="iconbtn" disabled>📋 복사</button>
@@ -158,6 +163,7 @@
 <canvas id="canvas" style="display:none"></canvas>
 
 <script>
+// ===== 유틸 & 보정 =====
 function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
 function hexToRgb(hex){
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -168,19 +174,17 @@ function rgbToHex(r,g,b){
   const h = n => ('0'+clamp(n|0,0,255).toString(16)).slice(-2);
   return `#${h(r)}${h(g)}${h(b)}`;
 }
-// sRGB 감마 보정 + 약간의 게인으로 밝기 올리기
-function brighten(hex, gain=1.12){ // 1.08~1.18 사이에서 취향대로
+// 컬러 저장 시 살짝 더 밝게 (sRGB 감마 보정)
+function brighten(hex, gain=1.15){
   const {r,g,b} = hexToRgb(hex);
-  // sRGB → 선형
   const toLin = c => Math.pow(c/255, 2.2);
   const toSrgb = c => Math.pow(c, 1/2.2)*255;
   let rl = toLin(r), gl = toLin(g), bl = toLin(b);
-  rl = clamp(rl * gain, 0, 1);
-  gl = clamp(gl * gain, 0, 1);
-  bl = clamp(bl * gain, 0, 1);
+  rl = clamp(rl*gain,0,1); gl = clamp(gl*gain,0,1); bl = clamp(bl*gain,0,1);
   return rgbToHex(toSrgb(rl), toSrgb(gl), toSrgb(bl));
 }
 
+// ===== 엘리먼트 =====
 const fileInput=document.getElementById('file');
 const drop=document.getElementById('drop');
 const preview=document.getElementById('preview');
@@ -196,6 +200,7 @@ const fsVal=document.getElementById('fsVal');
 const modeSel=document.getElementById('mode');
 const fontColorInp=document.getElementById('fontColor');
 const bgColorInp=document.getElementById('bgColor');
+const customMsgInp=document.getElementById('customMsg');
 
 const btnRender=document.getElementById('render');
 const btnCopy=document.getElementById('copyBtn');
@@ -209,10 +214,7 @@ let latestAsciiText='';
 let latestColorGrid=null; // 컬러 모드일 때 문자 색상 저장
 const CHARSET="@%#*+=-:. ";
 
-function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
-function toHex(v){v=clamp(v|0,0,255);return ('0'+v.toString(16)).slice(-2)}
-function rgbToHex(r,g,b){return '#'+toHex(r)+toHex(g)+toHex(b)}
-
+// ===== 파일 읽기 / 업로드 핸들러 =====
 function readFile(file){
   if(!file) return;
   const url=URL.createObjectURL(file);
@@ -227,8 +229,6 @@ function readFile(file){
   image.onerror=()=>alert('이미지를 불러오지 못했습니다.');
   image.src=url;
 }
-
-// 업로드: 클릭/키보드/드래그/붙여넣기
 drop.addEventListener('click',()=> fileInput.click());
 drop.addEventListener('keydown',(e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fileInput.click(); }});
 fileInput.addEventListener('change',e=> readFile(e.target.files?.[0]));
@@ -239,14 +239,14 @@ window.addEventListener('paste',e=>{
   for(const it of items){ if(it.type.startsWith('image/')){ readFile(it.getAsFile()); break; } }
 });
 
-// UI 표시값
+// ===== UI 표시값 =====
 widthRange.addEventListener('input',()=> wVal.textContent = widthRange.value);
 fontsizeRange.addEventListener('input',()=>{ fsVal.textContent = fontsizeRange.value; asciiPre.style.fontSize = fontsizeRange.value+'px'; });
 modeSel.addEventListener('change',()=>{ fontColorInp.disabled = (modeSel.value==='color'); if(img) renderASCII(); });
 fontColorInp.addEventListener('input',()=>{ if(modeSel.value==='mono' && latestAsciiText) asciiPre.style.color = fontColorInp.value; });
 bgColorInp.addEventListener('input',()=>{ if(latestAsciiText) asciiPre.style.background = bgColorInp.value; });
 
-// 핵심 렌더링
+// ===== 핵심 렌더링 (미리보기) =====
 function renderASCII(){
   if(!img) return;
   const targetCols=parseInt(widthRange.value,10);
@@ -283,24 +283,41 @@ function renderASCII(){
     if(mode==='color') colorGrid.push(rowColors);
   }
 
-  // 워터마크(항상 표시, 마지막 줄 끝에 고정)
+  // === 워터마크: 마지막 줄 맨왼쪽 ===
   const domain="textartkorea.com";
   if(lines.length){
     const last=lines[lines.length-1];
-    const start=Math.max(0,last.length-domain.length);
-    lines[lines.length-1]=last.slice(0,start)+domain;
+    const cols=last.length;
+    // 왼쪽으로 고정
+    const replaced = domain + last.slice(domain.length);
+    lines[lines.length-1] = replaced;
 
     if(mode==='color'){
       const rowIdx=lines.length-1;
-      const cols=lines[0]?.length||0;
-      const startCol=Math.max(0, cols-domain.length);
-      for(let c=0;c<domain.length && (startCol+c)<cols;c++){
-        colorGrid[rowIdx][startCol+c]='#ffffff';
+      for(let c=0;c<Math.min(domain.length, cols); c++){
+        colorGrid[rowIdx][c]='#ffffff';
       }
     }
   }else{
     lines.push(domain);
     if(mode==='color') colorGrid.push(domain.split('').map(()=> '#ffffff'));
+  }
+
+  // === 사용자 메시지: 마지막 줄 맨오른쪽 ===
+  const userMsg = (customMsgInp.value || '').slice(0,10);
+  if(userMsg){
+    const rowIdx = lines.length-1;
+    const baseLine = lines[rowIdx];
+    const cols = baseLine.length;
+    const start = Math.max(0, cols - userMsg.length);
+    const newLine = baseLine.slice(0, start) + userMsg;
+    lines[rowIdx] = newLine;
+
+    if(mode==='color'){
+      for(let i=0;i<userMsg.length;i++){
+        colorGrid[rowIdx][start+i] = '#ffffff'; // 메시지는 가독성 위해 흰색
+      }
+    }
   }
 
   latestAsciiText=lines.join('\n');
@@ -332,7 +349,7 @@ function renderASCII(){
   btnShareImage.disabled=false;
 }
 
-// PNG 빌드(저장/공유 공용)
+// ===== PNG 빌드(저장/공유 공용) — 더 밝게 + 두껍게 =====
 async function buildImageBlob(){
   if(!latestAsciiText) return null;
 
@@ -341,16 +358,16 @@ async function buildImageBlob(){
   const fontColor   = fontColorInp.value;
   const bgColor     = bgColorInp.value;
 
-  // 🔸 저장/공유 전용 고해상도 배율 (UI 추가 없이 내부에서만 적용)
-  const SCALE_FACTOR = 2; // 3으로 올리면 더 선명하지만 파일/메모리 증가
+  // 저장/공유 전용 고해상도 배율
+  const SCALE_FACTOR = 2;
 
   const tmp  = document.createElement('canvas');
   const tctx = tmp.getContext('2d');
   const fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
-  // 배율 적용된 폰트 크기/문자폭
+  // 굵기 + 배율 적용
   const fontSize  = baseFont * SCALE_FACTOR;
-  tctx.font       = `${fontSize}px ${fontFamily}`;
+  tctx.font       = `700 ${fontSize}px ${fontFamily}`; // 볼드로 더 두껍게
   const charWidth = tctx.measureText('M').width;
 
   const lines = latestAsciiText.split('\n');
@@ -364,23 +381,29 @@ async function buildImageBlob(){
   // 배경
   tctx.fillStyle = bgColor;
   tctx.fillRect(0, 0, tmp.width, tmp.height);
-  tctx.font = `${fontSize}px ${fontFamily}`;
+  tctx.font = `700 ${fontSize}px ${fontFamily}`;
   tctx.textBaseline = 'top';
 
   if (mode === 'mono') {
+    // 흑백: 사용자가 고른 폰트색 + 두 번 찍기로 두께/밝기 체감 상승
     tctx.fillStyle = fontColor;
     for (let r = 0; r < rows; r++) {
-      tctx.fillText(lines[r], pad, pad + r * fontSize);
+      const y = pad + r * fontSize;
+      tctx.fillText(lines[r], pad, y);
+      tctx.fillText(lines[r], pad, y); // 겹쳐 찍기
     }
   } else {
-    // 컬러 모드: 문자별 색상 적용
+    // 컬러: 저장시에만 컬러 밝기 보정 + 두 번 찍기
     for (let r = 0; r < rows; r++) {
       const chars  = lines[r];
       const colors = latestColorGrid[r];
       let x = pad;
+      const y = pad + r * fontSize;
       for (let c = 0; c < chars.length; c++) {
-        tctx.fillStyle = colors[c];
-        tctx.fillText(chars[c], x, pad + r * fontSize);
+        const bcol = brighten(colors[c], 1.15); // 조금 더 밝게
+        tctx.fillStyle = bcol;
+        tctx.fillText(chars[c], x, y);
+        tctx.fillText(chars[c], x, y); // 겹쳐 찍기로 두께감
         x += charWidth;
       }
     }
@@ -389,7 +412,7 @@ async function buildImageBlob(){
   return await new Promise(res => tmp.toBlob(res, 'image/png'));
 }
 
-// 버튼
+// ===== 버튼 =====
 btnRender.addEventListener('click',renderASCII);
 
 btnCopy.addEventListener('click',async()=>{
@@ -449,15 +472,16 @@ wVal.textContent=widthRange.value;
 fsVal.textContent=fontsizeRange.value;
 fontColorInp.disabled = (modeSel.value==='color');
 </script>
+
 <footer>
   <p style="text-align:center; color:#666; font-size:14px;">© 2025 textartkorea.com</p>
   <div style="max-width:600px; margin:20px auto; text-align:center;">
-  <a href="https://iryan.kr/t7372qyi9v" target="_blank" rel="noopener">
-    <img src="https://img.tenping.kr/Content/Upload/Content/2025080810130001_Con_20250811102256_5.jpg?RS=1200x1200" 
-         alt="광고 배너" 
-         style="width:100%; height:auto; border-radius:8px;">
-  </a>
-</div>
+    <a href="https://iryan.kr/t7372qyi9v" target="_blank" rel="noopener">
+      <img src="https://img.tenping.kr/Content/Upload/Content/2025080810130001_Con_20250811102256_5.jpg?RS=1200x1200" 
+           alt="광고 배너" 
+           style="width:100%; height:auto; border-radius:8px;">
+    </a>
+  </div>
 </footer>
 </body>
 </html>
