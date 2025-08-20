@@ -313,44 +313,57 @@ function renderASCII(){
 async function buildImageBlob(){
   if(!latestAsciiText) return null;
 
-  const mode=modeSel.value;
-  const fontSize=parseInt(fontsizeRange.value,10);
-  const fontColor=fontColorInp.value;
-  const bgColor=bgColorInp.value;
+  const mode        = modeSel.value;
+  const baseFont    = parseInt(fontsizeRange.value, 10);
+  const fontColor   = fontColorInp.value;
+  const bgColor     = bgColorInp.value;
 
-  const tmp=document.createElement('canvas');
-  const tctx=tmp.getContext('2d');
-  const fontFamily='ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
-  tctx.font=`${fontSize}px ${fontFamily}`;
-  const charWidth=tctx.measureText('M').width;
+  // 🔸 저장/공유 전용 고해상도 배율 (UI 추가 없이 내부에서만 적용)
+  const SCALE_FACTOR = 2; // 3으로 올리면 더 선명하지만 파일/메모리 증가
 
-  const lines=latestAsciiText.split('\n');
-  const cols=Math.max(...lines.map(l=>l.length));
-  const rows=lines.length;
-  const pad=Math.round(fontSize*0.7);
+  const tmp  = document.createElement('canvas');
+  const tctx = tmp.getContext('2d');
+  const fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
-  tmp.width=Math.ceil(pad + cols*charWidth + pad);
-  tmp.height=Math.ceil(pad + rows*fontSize + pad);
+  // 배율 적용된 폰트 크기/문자폭
+  const fontSize  = baseFont * SCALE_FACTOR;
+  tctx.font       = `${fontSize}px ${fontFamily}`;
+  const charWidth = tctx.measureText('M').width;
 
-  tctx.fillStyle=bgColor; tctx.fillRect(0,0,tmp.width,tmp.height);
-  tctx.font=`${fontSize}px ${fontFamily}`;
-  tctx.textBaseline='top';
+  const lines = latestAsciiText.split('\n');
+  const cols  = Math.max(...lines.map(l => l.length));
+  const rows  = lines.length;
+  const pad   = Math.round(fontSize * 0.7);
 
-  if(mode==='mono'){
-    tctx.fillStyle=fontColor;
-    for(let r=0;r<rows;r++){ tctx.fillText(lines[r], pad, pad + r*fontSize); }
-  }else{
-    for(let r=0;r<rows;r++){
-      const chars=lines[r]; const colors=latestColorGrid[r];
-      let xPad=pad;
-      for(let c=0;c<chars.length;c++){
-        tctx.fillStyle=colors[c];
-        tctx.fillText(chars[c], xPad, pad + r*fontSize);
-        xPad += charWidth;
+  tmp.width  = Math.ceil(pad + cols * charWidth + pad);
+  tmp.height = Math.ceil(pad + rows * fontSize + pad);
+
+  // 배경
+  tctx.fillStyle = bgColor;
+  tctx.fillRect(0, 0, tmp.width, tmp.height);
+  tctx.font = `${fontSize}px ${fontFamily}`;
+  tctx.textBaseline = 'top';
+
+  if (mode === 'mono') {
+    tctx.fillStyle = fontColor;
+    for (let r = 0; r < rows; r++) {
+      tctx.fillText(lines[r], pad, pad + r * fontSize);
+    }
+  } else {
+    // 컬러 모드: 문자별 색상 적용
+    for (let r = 0; r < rows; r++) {
+      const chars  = lines[r];
+      const colors = latestColorGrid[r];
+      let x = pad;
+      for (let c = 0; c < chars.length; c++) {
+        tctx.fillStyle = colors[c];
+        tctx.fillText(chars[c], x, pad + r * fontSize);
+        x += charWidth;
       }
     }
   }
-  return await new Promise(res=> tmp.toBlob(res, 'image/png'));
+
+  return await new Promise(res => tmp.toBlob(res, 'image/png'));
 }
 
 // 버튼
