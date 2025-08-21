@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-93TFLCBY3F"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);} gtag('js', new Date());
+    gtag('config', 'G-93TFLCBY3F');
+  </script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9891583086388017" crossorigin="anonymous"></script>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>픽셀 아트 생성기 - textartkorea.com</title>
+
+  <!-- favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+  <!-- Open Graph -->
+  <meta name="description" content="이미지를 로블록스풍 픽셀아트로 만들어보세요 (컬러 전용)">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="픽셀 아트 생성기 - textartkorea.com">
+  <meta property="og:description" content="이미지를 로블록스풍 픽셀아트로 만들어보세요 (컬러 전용)">
+  <meta property="og:site_name" content="textartkorea.com">
+  <meta property="og:image" content="https://textartkorea.com/preview.jpg">
+  <meta property="og:url" content="https://textartkorea.com/pixel">
+
+  <style>
+    /* ▼ 기존 UX 유지 + '어두운 노란색' 팔레트 */
+    :root{
+      --bg:#0b0b06;         /* 아주 어두운 밤색 */
+      --panel:#17140a;      /* 짙은 갈황색 패널 */
+      --text:#fff9d6;       /* 크림빛 텍스트 */
+      --muted:#c2b98a;      /* 탁한 노랑 회색*/
+      --accent:#e6b400;     /* 어두운 노란 포인트 */
+      --accent-2:#b38600;   /* 딥 옐로우 버튼 경계 */
+      --border:#3a3215;     /* 테두리 */
+    }
+    *{box-sizing:border-box}
+    body{margin:0; background:var(--bg); color:var(--text); font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+    .wrap{max-width:940px;margin:0 auto;padding:16px}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px}
+    .title{font-weight:800;font-size:18px}
+    .sharebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px}
+    .grid{display:grid;gap:12px}
+    @media(min-width:960px){.grid{grid-template-columns:360px 1fr}}
+
+    /* 업로드 영역 */
+    .drop{
+      border:2px dashed #5a4d1d;border-radius:12px;padding:18px;text-align:center;
+      background:#131005cc; cursor:pointer; user-select:none
+    }
+    .drop:hover{border-color:var(--accent)}
+    .drop strong.underline{text-decoration:underline}
+
+    .hint{color:var(--muted);font-size:12px}
+    .notice{margin-top:10px;padding:10px;border:1px dashed #5a4d1d;border-radius:10px;background:#131005aa}
+
+    .control{display:flex;flex-direction:column;gap:8px;margin:12px 0;padding:10px;border:1px solid var(--border);border-radius:10px;background:#131005aa}
+    .control label{font-size:12px;color:var(--muted)}
+    .control select{width:100%}
+
+    .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    button{
+      background:linear-gradient(180deg,#b38600,#805f00);
+      color:#fff9d6;border:1px solid var(--accent-2);
+      padding:11px 14px;border-radius:10px;font-weight:800;cursor:pointer
+    }
+    button.primary{background:linear-gradient(180deg,#e6b400,#b38600);color:#0b0b06}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .iconbtn{display:inline-flex;align-items:center;gap:6px}
+
+    /* 미리보기 캔버스 */
+    #canvasView{width:100%;height:auto;border-radius:12px;border:1px solid var(--border);background:#000}
+
+    /* 툴팁/작은 텍스트 */
+    .small{font-size:12px;color:var(--muted)}
+
+    @media(max-width:480px){.control{margin:10px 0; padding:10px} .btns{gap:10px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">🟨 픽셀 아트 생성기</div>
+    <div class="sharebar">
+      <button id="shareSite" class="iconbtn">📤 친구에게 공유</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- 좌측: 컨트롤 -->
+    <div class="panel">
+      <!-- 숨김 파일 입력 -->
+      <input id="file" type="file" accept="image/*" style="display:none">
+
+      <!-- 업로드 영역 -->
+      <div class="drop" id="drop" role="button" tabindex="0" aria-label="이미지를 드롭하거나 여기를 탭하여 업로드">
+        <div><strong>이미지 드롭</strong>하거나 <strong class="underline">여기를 탭하여 업로드</strong></div>
+        <div class="hint">클립보드 붙여넣기도 가능</div>
+      </div>
+
+      <div class="notice">💡 <strong>컬러 전용</strong>입니다. 해상도 옵션(16/32/64/128) 중 선택 후 <b>만들기</b>를 누르세요. JPG로 저장됩니다.</div>
+
+      <div class="control">
+        <label for="sizeSel">해상도(타일 수) — 기본 32×32</label>
+        <select id="sizeSel">
+          <option value="16">16 × 16</option>
+          <option value="32" selected>32 × 32</option>
+          <option value="64">64 × 64</option>
+          <option value="128">128 × 128</option>
+        </select>
+        <div class="small">정사각형으로 중앙 크롭 후 픽셀화해요.</div>
+      </div>
+
+      <div class="btns">
+        <button id="render" class="primary" disabled>만들기</button>
+        <button id="saveJpg" disabled>이미지 저장</button>
+        <button id="shareImage" disabled>이미지 공유</button>
+        <button id="clear">초기화</button>
+      </div>
+    </div>
+
+    <!-- 우측: 미리보기 -->
+    <div class="panel">
+      <div id="preview" style="margin-bottom:8px"></div>
+      <canvas id="canvasView"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- 내부 처리용 캔버스 -->
+<canvas id="workA" style="display:none"></canvas>
+<canvas id="workB" style="display:none"></canvas>
+
+<script>
+// ===== 엘리먼트 =====
+const fileInput = document.getElementById('file');
+const drop = document.getElementById('drop');
+const preview = document.getElementById('preview');
+const canvasView = document.getElementById('canvasView');
+const ctxView = canvasView.getContext('2d');
+const workA = document.getElementById('workA'); // 소스 크롭용
+const workB = document.getElementById('workB'); // 타일 샘플링/확대용
+const sizeSel = document.getElementById('sizeSel');
+const btnRender = document.getElementById('render');
+const btnSaveJpg = document.getElementById('saveJpg');
+const btnShareImage = document.getElementById('shareImage');
+const btnClear = document.getElementById('clear');
+const btnShareSite = document.getElementById('shareSite');
+
+let img = null;
+let lastBlob = null; // 최신 JPG blob
+
+// ===== 파일 읽기 / 업로드 핸들러 =====
+function readFile(file){
+  if(!file) return;
+  const url = URL.createObjectURL(file);
+  const image = new Image();
+  image.onload = () => {
+    img = image;
+    preview.innerHTML = `<img src="${url}" style="max-width:100%;border-radius:8px;border:1px solid var(--border)">`;
+    btnRender.disabled = false; // 만들기 활성화
+    // 초기화
+    lastBlob = null; canvasView.width = 0; canvasView.height = 0;
+    btnSaveJpg.disabled = true; btnShareImage.disabled = true;
+  };
+  image.onerror = () => alert('이미지를 불러오지 못했습니다.');
+  image.src = url;
+}
+
+// 클릭/키보드/드래그/붙여넣기 지원
+drop.addEventListener('click',()=> fileInput.click());
+drop.addEventListener('keydown',(e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fileInput.click(); }});
+fileInput.addEventListener('change', e => readFile(e.target.files?.[0]));
+['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{e.preventDefault(); e.stopPropagation();}));
+drop.addEventListener('drop', e=>{ e.preventDefault(); e.stopPropagation(); readFile(e.dataTransfer.files?.[0]); });
+window.addEventListener('paste', e=>{
+  const items=e.clipboardData?.items; if(!items) return;
+  for(const it of items){ if(it.type.startsWith('image/')){ readFile(it.getAsFile()); break; } }
+});
+
+// ===== 픽셀화 렌더링 =====
+function renderPixelArt(){
+  if(!img) return;
+  const tiles = parseInt(sizeSel.value, 10); // 16|32|64|128
+
+  // 1) 정사각형 중앙 크롭
+  const s = Math.min(img.width, img.height);
+  const sx = Math.floor((img.width - s) / 2);
+  const sy = Math.floor((img.height - s) / 2);
+  workA.width = s; workA.height = s;
+  const aCtx = workA.getContext('2d', { willReadFrequently:true });
+  aCtx.imageSmoothingEnabled = true; aCtx.imageSmoothingQuality = 'high';
+  aCtx.drawImage(img, sx, sy, s, s, 0, 0, s, s);
+
+  // 2) 축소하여 타일 색 추출 (tiles x tiles)
+  workB.width = tiles; workB.height = tiles;
+  const bCtx = workB.getContext('2d', { willReadFrequently:true });
+  bCtx.imageSmoothingEnabled = true; bCtx.imageSmoothingQuality = 'high';
+  bCtx.drawImage(workA, 0, 0, tiles, tiles);
+
+  // 3) 보기용 캔버스에 '픽셀 확대' (최근접 이웃)
+  const CELL = Math.max(4, Math.floor(512/tiles)); // 반응형 기본 셀 크기
+  canvasView.width = tiles * CELL; canvasView.height = tiles * CELL;
+  ctxView.imageSmoothingEnabled = false; // ✨ 픽셀 느낌 유지
+  ctxView.clearRect(0,0,canvasView.width,canvasView.height);
+
+  // 빠른 스케일 드로우 (이미 픽셀 그리드 상태)
+  ctxView.drawImage(workB, 0, 0, canvasView.width, canvasView.height);
+
+  // 마지막 결과 블롭 초기화 (재생성 필요)
+  lastBlob = null;
+  btnSaveJpg.disabled = false;
+  btnShareImage.disabled = false;
+}
+
+// ===== 고해상도 JPG 생성 =====
+async function buildJpgBlob(){
+  if(!img) return null;
+  const tiles = parseInt(sizeSel.value, 10);
+  // 출력 해상도 (정사각형). 너무 크지 않게 1024 권장
+  const OUT = 1024;
+
+  // 1) 정사각형 중앙 크롭 → 타일 샘플링
+  const s = Math.min(img.width, img.height);
+  const sx = Math.floor((img.width - s) / 2);
+  const sy = Math.floor((img.height - s) / 2);
+
+  // 타일 샘플용 캔버스
+  const tileCan = document.createElement('canvas');
+  tileCan.width = tiles; tileCan.height = tiles;
+  const tctx = tileCan.getContext('2d', { willReadFrequently:true });
+  tctx.imageSmoothingEnabled = true; tctx.imageSmoothingQuality = 'high';
+  // 우선 정사각형 크롭을 임시 캔버스에
+  const crop = document.createElement('canvas'); crop.width = s; crop.height = s;
+  const cctx = crop.getContext('2d', { willReadFrequently:true });
+  cctx.drawImage(img, sx, sy, s, s, 0, 0, s, s);
+  // 그 다음 tiles x tiles 로 축소
+  tctx.drawImage(crop, 0, 0, tiles, tiles);
+
+  // 2) 최종 출력 캔버스에 최근접 이웃으로 확대해서 그리기
+  const out = document.createElement('canvas');
+  out.width = OUT; out.height = OUT;
+  const octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = false; // 최근접
+  octx.fillStyle = '#000'; octx.fillRect(0,0,OUT,OUT);
+  octx.drawImage(tileCan, 0, 0, OUT, OUT);
+
+  // 3) JPG 출력 (컬러만, 퀄리티 0.92)
+  return await new Promise(res => out.toBlob(res, 'image/jpeg', 0.92));
+}
+
+// ===== 버튼 동작 =====
+btnRender.addEventListener('click', renderPixelArt);
+
+btnSaveJpg.addEventListener('click', async () => {
+  if(!lastBlob) lastBlob = await buildJpgBlob();
+  if(!lastBlob){ alert('먼저 이미지를 업로드하고 만들기를 눌러주세요.'); return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(lastBlob);
+  a.download = 'pixel-art.jpg';
+  a.click();
+});
+
+btnShareImage.addEventListener('click', async () => {
+  if(!lastBlob) lastBlob = await buildJpgBlob();
+  if(!lastBlob){ alert('먼저 이미지를 업로드하고 만들기를 눌러주세요.'); return; }
+  const file = new File([lastBlob], 'pixel-art.jpg', { type:'image/jpeg' });
+  if(navigator.canShare && navigator.canShare({ files:[file] })){
+    try{ await navigator.share({ files:[file], title:'픽셀 아트', text:'픽셀 아트를 공유합니다.' }); }
+    catch(e){ /* 사용자가 취소할 수 있음 */ }
+  }else{
+    const a=document.createElement('a'); a.href=URL.createObjectURL(lastBlob); a.download='pixel-art.jpg'; a.click();
+    alert('이 브라우저는 이미지 공유를 지원하지 않아 다운로드로 대체했어요. 다운로드된 이미지를 공유해 주세요.');
+  }
+});
+
+btnClear.addEventListener('click', () => {
+  img = null; lastBlob = null;
+  fileInput.value=''; preview.innerHTML='';
+  canvasView.width = 0; canvasView.height = 0;
+  btnRender.disabled = true; btnSaveJpg.disabled = true; btnShareImage.disabled = true;
+});
+
+// 사이트 공유
+btnShareSite.addEventListener('click', async () => {
+  const shareData = { title:'픽셀 아트 생성기', text:'이미지를 로블록스풍 픽셀아트로 변환해보세요!', url: location.href };
+  if(navigator.share){ try{ await navigator.share(shareData); }catch(e){} }
+  else{
+    try{ await navigator.clipboard.writeText(location.href); alert('사이트 주소가 복사되었어요!'); }
+    catch(e){ alert('공유 미지원 브라우저입니다. 주소를 직접 복사해 주세요: '+location.href); }
+  }
+});
+
+// 이미지 선택 감지로 만들기 활성화
+const mo = new MutationObserver(()=>{ btnRender.disabled = !img; });
+mo.observe(preview,{ childList:true });
+</script>
+
+<footer>
+  <p style="text-align:center; color:#9c915f; font-size:14px;">© 2025 textartkorea.com</p>
+  <div style="max-width:600px; margin:20px auto; text-align:center;">
+    <a href="https://iryan.kr/t7372qyi9v" target="_blank" rel="noopener">
+      <img src="https://img.tenping.kr/Content/Upload/Content/2025080810130001_Con_20250811102256_5.jpg?RS=1200x1200" alt="광고 배너" style="width:100%; height:auto; border-radius:8px;">
+    </a>
+  </div>
+</footer>
+</body>
+</html>
