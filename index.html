@@ -156,10 +156,10 @@
         <input id="bgColor" type="color" value="#000000">
       </div>
 
-      <!-- 🔹 사용자 메시지: 최대 10글자, 우측 하단 출력 -->
+      <!-- 🔹 사용자 메시지: 최대 20글자, 우측 하단 출력 -->
       <div class="control">
-        <label for="customMsg">메시지 (최대 10글자까지 입력 가능. 우측 하단 출력)</label>
-        <input id="customMsg" type="text" maxlength="10" placeholder="메시지 입력">
+        <label for="customMsg">메시지 (최대 20글자까지 입력 가능. 우측 하단 출력)</label>
+        <input id="customMsg" type="text" maxlength="20" placeholder="메시지 입력">
       </div>
 
       <div class="btns">
@@ -326,7 +326,7 @@ function renderASCII(){
   }
 
   // ✅ 사용자 메시지는 더 이상 마지막 줄에 끼우지 않음 — 아래 박스에 별도 표시
-  const userMsg = (customMsgInp.value || '').slice(0,10);
+  const userMsg = (customMsgInp.value || '').slice(0,20);
 
   latestAsciiText=lines.join('\n');
   latestColorGrid=(mode==='color') ? colorGrid : null;
@@ -370,7 +370,7 @@ async function buildImageBlob(){
   const baseFont    = parseInt(fontsizeRange.value, 10);
   const fontColor   = fontColorInp.value;
   const bgColor     = bgColorInp.value;
-  const userMsg     = (customMsgInp.value || '').slice(0,10);
+  const userMsg     = (customMsgInp.value || '').slice(0,20);
 
   // 저장/공유 전용 고해상도 배율
   const SCALE_FACTOR = 2;
