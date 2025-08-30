@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="naver-site-verification" content="907309a9759c57d67cd81f19709282c0a72d3211" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9891583086388017"
+     crossorigin="anonymous"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-F00NF909N7"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-F00NF909N7');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Text Art Generator - textartkorea.com</title>
+
+<!-- favicon -->
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+<!-- Open Graph -->
+<meta name="description" content="Convert your image into text art">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Text Art Generator - textartkorea.com">
+<meta property="og:description" content="Convert your image into text art">
+<meta property="og:site_name" content="textartkorea.com">
+<meta property="og:image" content="https://textartkorea.com/preview.jpg">
+<meta property="og:url" content="https://textartkorea.com">
+
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#111823; --text:#e5eef7; --muted:#94a3b8; --accent:#4f9cf9; --border:#1e293b
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace
+  }
+  .wrap{max-width:940px;margin:0 auto;padding:16px}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px}
+  .title{font-weight:800;font-size:18px}
+  .sharebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px}
+  .grid{display:grid;gap:12px}
+  @media(min-width:960px){.grid{grid-template-columns:360px 1fr}}
+
+  .drop{
+    border:2px dashed #334155;border-radius:12px;padding:18px;text-align:center;
+    background:#0f172a55; cursor:pointer; user-select:none
+  }
+  .drop:hover{border-color:var(--accent)}
+  .drop strong.underline{ text-decoration: underline; }
+
+  .hint{color:var(--muted);font-size:12px}
+  .notice{margin-top:10px;padding:10px;border:1px dashed #2b3b55;border-radius:10px;background:#0f172a88}
+
+  .control{
+    display:flex; flex-direction:column; gap:8px;
+    margin:12px 0; padding:10px; border:1px solid var(--border); border-radius:10px; background:#0f172a66
+  }
+  .control label{font-size:12px;color:var(--muted)}
+  .control input[type="range"], .control select, .control input[type="color"], .control input[type="text"]{width:100%}
+
+  .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  button{
+    background:#1e293b;color:#dbeafe;border:1px solid #2b3b55;
+    padding:11px 14px;border-radius:10px;font-weight:700;cursor:pointer
+  }
+  button.primary{background:linear-gradient(180deg,#3b82f6,#2563eb);color:#fff}
+  button:disabled{opacity:.55;cursor:not-allowed}
+  .iconbtn{display:inline-flex;align-items:center;gap:6px}
+
+  pre#ascii{
+    margin:0; white-space:pre; overflow:auto; background:#000; color:#fff;
+    padding:12px; border-radius:12px; line-height:1em; min-height:200px
+  }
+
+  .msg-below{
+    margin-top:6px;
+    text-align:right;
+    font-weight:700;
+    color:#fff;
+    white-space:pre;
+  }
+
+  @media(max-width:480px){
+    .control{margin:10px 0; padding:10px}
+    .btns{gap:10px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">🔤 Text Art Generator</div>
+    <div class="sharebar">
+      <button id="shareSite" class="iconbtn">📤 Share with a friend</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="panel">
+      <input id="file" type="file" accept="image/*" style="display:none">
+
+      <div class="drop" id="drop" role="button" tabindex="0" aria-label="Drop image or tap here to upload">
+        <div><strong>Drop image</strong> or <strong class="underline">Tap here to upload</strong></div>
+        <div class="hint">You can also paste from clipboard</div>
+      </div>
+
+      <div class="notice">💡 <strong>Save as image for best results.</strong> In some messengers the font may break alignment. On mobile, less than 50 columns is recommended.</div>
+
+      <div class="control">
+        <label>Output width: <span id="wVal">50</span> cols</label>
+        <input id="width" type="range" min="30" max="300" value="50">
+      </div>
+
+      <div class="control">
+        <label>Font size: <span id="fsVal">12</span>px</label>
+        <input id="fontsize" type="range" min="8" max="20" value="12">
+      </div>
+
+      <div class="control">
+        <label for="mode">Mode</label>
+        <select id="mode">
+          <option value="mono" selected>Black & White</option>
+          <option value="color">Color</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="fontColor">Font color (B/W mode)</label>
+        <input id="fontColor" type="color" value="#ffffff">
+      </div>
+
+      <div class="control">
+        <label for="bgColor">Background color</label>
+        <input id="bgColor" type="color" value="#000000">
+      </div>
+
+      <div class="control">
+        <label for="customMsg">Message (max 20 characters, displayed bottom-right)</label>
+        <input id="customMsg" type="text" maxlength="20" placeholder="Enter message">
+      </div>
+
+      <div class="btns">
+        <button id="render" class="primary" disabled>Generate</button>
+        <button id="copyBtn" class="iconbtn" disabled>📋 Copy</button>
+        <button id="shareImage" disabled>Share Image</button>
+        <button id="savePng" disabled>Save Image</button>
+        <button id="clear">Reset</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div id="preview" style="margin-bottom:8px"></div>
+      <pre id="ascii"></pre>
+      <div id="msgBelow" class="msg-below"></div>
+    </div>
+  </div>
+</div>
+
+<canvas id="canvas" style="display:none"></canvas>
+
+<!-- script stays unchanged -->
+
+<a href="https://2048global.com/textart" style="color:white;" target="_blank" rel="noopener noreferrer">
+  2048global HOME
+</a>
+
+<footer>
+  <p style="text-align:center; color:#666; font-size:14px;">© 2025 textartkorea.com</p>
+</footer>
+</body>
+</html>
